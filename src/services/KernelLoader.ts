@@ -22,28 +22,32 @@ export class KernelLoader {
     async loadLatestKernel(): Promise<string> {
         try {
             // 1. Get latest stable kernel
-            console.log('Fetching latest kernel from backend...');
+            console.log('[KernelLoader] Fetching latest kernel from backend...');
             const latestKernel = await backendApi.getLatestKernel();
             this.currentVersion = latestKernel.version;
+            console.log(`[KernelLoader] Latest kernel version: ${latestKernel.version}`);
 
             // 2. Download WASM
-            console.log(`Downloading kernel ${latestKernel.version}...`);
+            console.log(`[KernelLoader] Downloading kernel ${latestKernel.version}...`);
             const wasmBytes = await backendApi.downloadKernel(latestKernel.version);
+            console.log(`[KernelLoader] Downloaded ${wasmBytes.byteLength} bytes`);
 
             // 3. Initialize WASM module
-            console.log('Initializing WASM module...');
-            await init(wasmBytes);
+            console.log('[KernelLoader] Initializing WASM module...');
+            await init({ module_or_path: wasmBytes });
+            console.log('[KernelLoader] WASM module initialized');
 
             // 4. Create processor instance
+            console.log('[KernelLoader] Creating EMV processor instance...');
             this.kernelInstance = new WasmEmvProcessor("156", "CNY");
 
-            console.log(`✅ Kernel ${latestKernel.version} loaded successfully`);
+            console.log(`[KernelLoader] ✅ Kernel ${latestKernel.version} loaded successfully`);
             return latestKernel.version;
         } catch (error) {
-            console.error('Kernel load failed:', error);
+            console.error('[KernelLoader] ❌ Kernel load failed:', error);
 
             // Fallback to mock kernel on error
-            console.warn('Falling back to mock kernel');
+            console.warn('[KernelLoader] ⚠️  Falling back to mock kernel');
             return this.loadMockKernel();
         }
     }
@@ -83,7 +87,7 @@ export class KernelLoader {
 
             const wasmBytes = await response.arrayBuffer();
 
-            await init(wasmBytes);
+            await init({ module_or_path: wasmBytes });
             this.kernelInstance = new WasmEmvProcessor("156", "CNY");
 
             this.currentVersion = version;
@@ -104,22 +108,29 @@ export class KernelLoader {
             throw new Error('Kernel not loaded');
         }
 
+        console.log(`[KernelLoader] 💳 Processing transaction: $${amount}`);
+
         // Simulate processing time
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         try {
             // Use the WASM processor to select PPSE as a test
             // In a real flow, this would be a sequence of APDU commands
+            console.log('[KernelLoader] Calling WASM kernel selectPpse()...');
             const ppseResult = this.kernelInstance.selectPpse();
-            console.log('PPSE Selection Result:', ppseResult);
+            console.log('[KernelLoader] PPSE Selection Result:', ppseResult);
 
             // For demo, we just return a success result
+            const cryptogram = `TC_${Date.now()}_${amount}_${Math.random().toString(36).substring(7).toUpperCase()}`;
+            console.log(`[KernelLoader] ✅ Transaction processed successfully`);
+            console.log(`[KernelLoader] Generated cryptogram: ${cryptogram}`);
+
             return {
                 success: true,
-                cryptogram: `TC_${Date.now()}_${amount}_${Math.random().toString(36).substring(7).toUpperCase()}`
+                cryptogram
             };
         } catch (e) {
-            console.error('WASM processing error:', e);
+            console.error('[KernelLoader] ❌ WASM processing error:', e);
             throw e;
         }
     }

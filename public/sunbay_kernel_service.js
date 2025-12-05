@@ -4,7 +4,7 @@ function debugString(val) {
     // primitive types
     const type = typeof val;
     if (type == 'number' || type == 'boolean' || val == null) {
-        return `${val}`;
+        return  `${val}`;
     }
     if (type == 'string') {
         return `"${val}"`;
@@ -32,7 +32,7 @@ function debugString(val) {
         if (length > 0) {
             debug += debugString(val[0]);
         }
-        for (let i = 1; i < length; i++) {
+        for(let i = 1; i < length; i++) {
             debug += ', ' + debugString(val[i]);
         }
         debug += ']';
@@ -159,7 +159,7 @@ if (!('encodeInto' in cachedTextEncoder)) {
 let WASM_VECTOR_LEN = 0;
 
 const WasmEmvProcessorFinalization = (typeof FinalizationRegistry === 'undefined')
-    ? { register: () => { }, unregister: () => { } }
+    ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_wasmemvprocessor_free(ptr >>> 0, 1));
 
 /**
@@ -331,37 +331,37 @@ async function __wbg_load(module, imports) {
 function __wbg_get_imports() {
     const imports = {};
     imports.wbg = {};
-    imports.wbg.__wbg___wbindgen_debug_string_adfb662ae34724b6 = function (arg0, arg1) {
+    imports.wbg.__wbg___wbindgen_debug_string_adfb662ae34724b6 = function(arg0, arg1) {
         const ret = debugString(arg1);
         const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len1 = WASM_VECTOR_LEN;
         getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
         getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
     };
-    imports.wbg.__wbg___wbindgen_throw_dd24417ed36fc46e = function (arg0, arg1) {
+    imports.wbg.__wbg___wbindgen_throw_dd24417ed36fc46e = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbg_log_bb1404c28ab00753 = function (arg0, arg1) {
+    imports.wbg.__wbg_log_bb1404c28ab00753 = function(arg0, arg1) {
         console.log(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbg_new_1ba21ce319a06297 = function () {
+    imports.wbg.__wbg_new_1ba21ce319a06297 = function() {
         const ret = new Object();
         return ret;
     };
-    imports.wbg.__wbg_set_3f1d0b984ed272ed = function (arg0, arg1, arg2) {
+    imports.wbg.__wbg_set_3f1d0b984ed272ed = function(arg0, arg1, arg2) {
         arg0[arg1] = arg2;
     };
-    imports.wbg.__wbindgen_cast_2241b6af4c4b2941 = function (arg0, arg1) {
+    imports.wbg.__wbindgen_cast_2241b6af4c4b2941 = function(arg0, arg1) {
         // Cast intrinsic for `Ref(String) -> Externref`.
         const ret = getStringFromWasm0(arg0, arg1);
         return ret;
     };
-    imports.wbg.__wbindgen_cast_d6cd19b81560fd6e = function (arg0) {
+    imports.wbg.__wbindgen_cast_d6cd19b81560fd6e = function(arg0) {
         // Cast intrinsic for `F64 -> Externref`.
         const ret = arg0;
         return ret;
     };
-    imports.wbg.__wbindgen_init_externref_table = function () {
+    imports.wbg.__wbindgen_init_externref_table = function() {
         const table = wasm.__wbindgen_externrefs;
         const offset = table.grow(4);
         table.set(0, undefined);
@@ -371,7 +371,6 @@ function __wbg_get_imports() {
         table.set(offset + 3, false);
     };
 
-    console.log('[sunbay_kernel_service] Imports prepared:', imports);
     return imports;
 }
 
@@ -382,9 +381,7 @@ function __wbg_finalize_init(instance, module) {
     cachedUint8ArrayMemory0 = null;
 
 
-    if (typeof wasm.__wbindgen_start === 'function') {
-        wasm.__wbindgen_start();
-    }
+    wasm.__wbindgen_start();
     return wasm;
 }
 
@@ -394,7 +391,7 @@ function initSync(module) {
 
     if (typeof module !== 'undefined') {
         if (Object.getPrototypeOf(module) === Object.prototype) {
-            ({ module } = module)
+            ({module} = module)
         } else {
             console.warn('using deprecated parameters for `initSync()`; pass a single object instead')
         }
@@ -414,9 +411,9 @@ async function __wbg_init(module_or_path) {
 
     if (typeof module_or_path !== 'undefined') {
         if (Object.getPrototypeOf(module_or_path) === Object.prototype) {
-            ({ module_or_path } = module_or_path)
+            ({module_or_path} = module_or_path)
         } else {
-            // console.warn('using deprecated parameters for the initialization function; pass a single object instead')
+            console.warn('using deprecated parameters for the initialization function; pass a single object instead')
         }
     }
 
