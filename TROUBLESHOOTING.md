@@ -1,5 +1,28 @@
 # WebKernel Demo 故障排查指南
 
+## 🔥 常见问题快速修复
+
+### Device ID 格式错误 (demo-device-rhphbc)
+
+**症状**:
+```
+❌ Key injection failed: Device not found
+✅ Using existing device ID: demo-device-rhphbc
+```
+
+**原因**: localStorage中保存了旧格式的device ID
+
+**快速修复** (在浏览器Console运行):
+```javascript
+localStorage.removeItem('sunbay_demo_device_id');
+localStorage.removeItem('sunbay_demo_imei');
+location.reload();
+```
+
+详细说明: [FIX_DEVICE_ID_ERROR.md](./FIX_DEVICE_ID_ERROR.md)
+
+---
+
 ## 设备注册失败问题
 
 ### 常见原因

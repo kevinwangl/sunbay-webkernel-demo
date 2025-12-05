@@ -1,4 +1,4 @@
-import { backendApi, kernelServiceApi } from '../api/client';
+import { backendApi } from '../api/client';
 import { AppConfig } from '../config';
 import init, { WasmEmvProcessor } from '../wasm/sunbay_kernel_service';
 
@@ -94,73 +94,7 @@ export class KernelLoader {
         }
     }
 
-    /**
-     * Perform a remote EMV transaction demo (APDU over HTTP)
-     * Flow: Select PPSE -> Select AID -> GPO -> Read Record
-     */
-    async performRemoteEmvTransaction(deviceId: string, onLog?: (msg: string) => void): Promise<string[]> {
-        const logs: string[] = [];
-        const log = (msg: string) => {
-            console.log(`[RemoteEMV] ${msg}`);
-            logs.push(msg);
-            if (onLog) onLog(msg);
-        };
 
-        try {
-            log('🚀 Starting Remote EMV Transaction Demo...');
-
-            // 1. Select PPSE
-            // 2PAY.SYS.DDF01 = 325041592E5359532E4444463031
-            const ppseAid = '325041592E5359532E4444463031';
-            log(`➡️ SELECT PPSE (${ppseAid})`);
-
-            const ppseRes = await kernelServiceApi.selectApplication(ppseAid, deviceId);
-            log(`⬅️ PPSE Response: SW=${ppseRes.sw} FCI=${ppseRes.fci.substring(0, 20)}...`);
-
-            if (!ppseRes.success) throw new Error(`PPSE Select failed: ${ppseRes.sw}`);
-
-            // 2. Select AID (Simulated extraction from PPSE response)
-            // Target: A000000333010101 (UnionPay)
-            const appAid = 'A000000333010101';
-            log(`➡️ SELECT Application (${appAid})`);
-
-            const appRes = await kernelServiceApi.selectApplication(appAid, deviceId);
-            log(`⬅️ App Select Response: SW=${appRes.sw} FCI=${appRes.fci.substring(0, 20)}...`);
-
-            if (!appRes.success) throw new Error(`App Select failed: ${appRes.sw}`);
-
-            // 3. Get Processing Options (GPO)
-            // PDOL Data (Simulated)
-            const pdol = '8300';
-            log(`➡️ GET PROCESSING OPTIONS (PDOL=${pdol})`);
-
-            const gpoRes = await kernelServiceApi.getProcessingOptions(pdol, deviceId);
-            log(`⬅️ GPO Response: SW=${gpoRes.sw} AIP=${gpoRes.aip} AFL=${gpoRes.afl}`);
-
-            if (!gpoRes.success) throw new Error(`GPO failed: ${gpoRes.sw}`);
-
-            // 4. Read Records (Based on AFL)
-            // Simulating reading SFI 1, Record 1
-            const sfi = 1;
-            const record = 1;
-            log(`➡️ READ RECORD (SFI=${sfi}, Rec=${record})`);
-
-            const readRes = await kernelServiceApi.readRecord(sfi, record, deviceId);
-            log(`⬅️ Read Response: SW=${readRes.sw} Data=${readRes.data.substring(0, 20)}...`);
-
-            if (!readRes.success) throw new Error(`Read Record failed: ${readRes.sw}`);
-
-            log('✅ Remote EMV Transaction Demo Completed Successfully');
-            return logs;
-
-        } catch (e: any) {
-            const errorMsg = `❌ Remote EMV Error: ${e.message}`;
-            console.error(errorMsg);
-            logs.push(errorMsg);
-            if (onLog) onLog(errorMsg);
-            throw e;
-        }
-    }
 
     /**
      * Process a transaction using the loaded kernel
@@ -192,28 +126,14 @@ export class KernelLoader {
 
     /**
      * Register device with backend
-     * Uses localStorage to persist device_id and avoid re-registration
+     * Uses fixed IMEI from config. If device already exists, backend returns existing device_id.
+     * If not, backend creates new device and returns new device_id.
      */
     async registerDevice(): Promise<string> {
         try {
-            // Check if we already have a registered device ID
-            const existingDeviceId = localStorage.getItem('sunbay_demo_device_id');
-            if (existingDeviceId) {
-                console.log(`✅ Using existing device ID: ${existingDeviceId}`);
-                return existingDeviceId;
-            }
-
-            // Use a fixed IMEI configuration (simulated)
-            // In a real device, this would be read from hardware
-            // For demo, we persist it to simulate a fixed device identity
-            // Use a random IMEI if not set to avoid conflicts
-            let imei = localStorage.getItem('sunbay_demo_imei');
-            if (!imei) {
-                // Generate random IMEI suffix
-                const randomSuffix = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-                imei = `863592048${randomSuffix}`;
-                localStorage.setItem('sunbay_demo_imei', imei);
-            }
+            // Use fixed IMEI from configuration
+            // This simulates a real device with a fixed hardware identifier
+            const imei = AppConfig.defaultImei;
 
             console.log(`📱 Registering device with IMEI ${imei}...`);
 
@@ -223,11 +143,11 @@ export class KernelLoader {
             const response = await backendApi.registerDevice({
                 imei: imei,
                 model: AppConfig.deviceModel,
-                os_version: '1.0.0',
-                tee_type: AppConfig.teeType,
-                public_key: mockPublicKey,
-                device_mode: AppConfig.deviceMode,
-                nfc_present: true
+                os_version: '1.0.0',  // snake_case for RegisterDeviceRequest
+                tee_type: AppConfig.teeType,  // snake_case
+                public_key: mockPublicKey,  // snake_case
+                device_mode: AppConfig.deviceMode,  // snake_case
+                nfc_present: true  // snake_case
             });
 
             // The backend returns snake_case 'device_id'
@@ -237,11 +157,12 @@ export class KernelLoader {
                 throw new Error('No device_id in registration response');
             }
 
-            // Persist device ID to localStorage for future use
-            localStorage.setItem('sunbay_demo_device_id', deviceId);
-
-            console.log(`✅ Device registered successfully with ID: ${deviceId}`);
-            console.log(`💾 Device ID saved to localStorage for reuse`);
+            // Check if this is an existing device or newly registered
+            if (response.message && response.message.includes('already registered')) {
+                console.log(`✅ Using existing device with ID: ${deviceId}`);
+            } else {
+                console.log(`✅ New device registered successfully with ID: ${deviceId}`);
+            }
 
             return deviceId;
         } catch (error) {

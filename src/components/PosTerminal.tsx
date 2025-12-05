@@ -11,8 +11,6 @@ export const PosTerminal: React.FC = () => {
     const [statusMessage, setStatusMessage] = useState('Initializing Secure Kernel...');
     const [cryptogram, setCryptogram] = useState('');
     const [deviceId, setDeviceId] = useState<string>('');
-    const [remoteLogs, setRemoteLogs] = useState<string[]>([]);
-    const [showLogs, setShowLogs] = useState(false);
 
     const initFlow = async () => {
         try {
@@ -119,21 +117,6 @@ export const PosTerminal: React.FC = () => {
         }
     };
 
-    const handleRemoteDemo = async () => {
-        if (!deviceId) return;
-
-        try {
-            setRemoteLogs([]);
-            setShowLogs(true);
-            const loader = KernelLoader.getInstance();
-            await loader.performRemoteEmvTransaction(deviceId, (msg) => {
-                setRemoteLogs(prev => [...prev, msg]);
-            });
-        } catch (e) {
-            console.error('Remote demo failed', e);
-        }
-    };
-
     const reset = () => {
         setAmount('');
         setCryptogram('');
@@ -209,25 +192,7 @@ export const PosTerminal: React.FC = () => {
                 ID: {deviceId ? deviceId.substring(0, 12) + '...' : '---'} | Kernel: {kernelVersion || '---'} | Secure Enclave: Active
             </div>
 
-            <div className="debug-controls">
-                <button onClick={handleRemoteDemo} disabled={!deviceId} className="demo-btn">
-                    Run Remote EMV Demo
-                </button>
-            </div>
 
-            {showLogs && (
-                <div className="log-console">
-                    <div className="log-header">
-                        <span>Remote EMV Logs</span>
-                        <button onClick={() => setShowLogs(false)}>x</button>
-                    </div>
-                    <div className="log-content">
-                        {remoteLogs.length === 0 ? <p>Running...</p> : remoteLogs.map((log, i) => (
-                            <p key={i} className="log-line">{log}</p>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

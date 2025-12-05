@@ -15,6 +15,16 @@
 
 ## 🚀 快速开始
 
+### ⚠️ 遇到 "Device not found" 错误？
+
+如果看到 `demo-device-rhphbc` 错误，在浏览器Console运行：
+```javascript
+localStorage.clear(); location.reload();
+```
+详见: [FIX_DEVICE_ID_ERROR.md](./FIX_DEVICE_ID_ERROR.md)
+
+---
+
 ### 1. 配置应用
 
 复制配置模板并根据需要修改：

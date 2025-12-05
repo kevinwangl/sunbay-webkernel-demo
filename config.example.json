@@ -1,6 +1,5 @@
 {
   "backendUrl": "http://localhost:8080",
-  "kernelServiceUrl": "http://localhost:3000",
   "defaultImei": "863592048725123",
   "deviceModel": "Sunbay-Web-Demo",
   "teeType": "QTEE",

@@ -16,9 +16,6 @@ export interface AppConfiguration {
     // The URL of the Sunbay SoftPOS Backend
     backendUrl: string;
     
-    // The URL of the Kernel Service
-    kernelServiceUrl: string;
-    
     // The Fixed IMEI to use for this device
     defaultImei: string;
     
@@ -44,7 +41,6 @@ export interface AppConfiguration {
 // Default configuration (fallback)
 const defaultConfig: AppConfiguration = {
     backendUrl: 'http://localhost:8080',
-    kernelServiceUrl: 'http://localhost:3000',
     defaultImei: '863592048725123',
     deviceModel: 'Sunbay-Web-Demo',
     teeType: 'QTEE',
