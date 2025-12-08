@@ -1,6 +1,7 @@
 import { backendApi } from '../api/client';
 import { getConfig } from '../config';
 import init, { WasmEmvProcessor } from '../wasm/sunbay_kernel_service';
+import { logger } from '../utils/logger';
 
 export class KernelLoader {
     private static instance: KernelLoader;
@@ -22,33 +23,30 @@ export class KernelLoader {
     async loadLatestKernel(): Promise<string> {
         try {
             // 1. Get latest stable kernel
-            console.log('[KernelLoader] Fetching latest kernel from backend...');
+            logger.debug('KernelLoader', 'Fetching latest kernel from backend...');
             const latestKernel = await backendApi.getLatestKernel();
             this.currentVersion = latestKernel.version;
-            console.log(`[KernelLoader] Latest kernel version: ${latestKernel.version}`);
+            logger.debug('KernelLoader', `Latest kernel version: ${latestKernel.version}`);
 
             // 2. Download WASM
-            console.log(`[KernelLoader] Downloading kernel ${latestKernel.version}...`);
+            logger.debug('KernelLoader', `Downloading kernel ${latestKernel.version}...`);
             const wasmBytes = await backendApi.downloadKernel(latestKernel.version);
-            console.log(`[KernelLoader] Downloaded ${wasmBytes.byteLength} bytes`);
+            logger.debug('KernelLoader', `Downloaded ${wasmBytes.byteLength} bytes`);
 
             // 3. Initialize WASM module
-            console.log('[KernelLoader] Initializing WASM module...');
+            logger.debug('KernelLoader', 'Initializing WASM module...');
             await init({ module_or_path: wasmBytes });
-            console.log('[KernelLoader] WASM module initialized');
+            logger.debug('KernelLoader', 'WASM module initialized');
 
             // 4. Create processor instance
-            console.log('[KernelLoader] Creating EMV processor instance...');
+            logger.debug('KernelLoader', 'Creating EMV processor instance...');
             this.kernelInstance = new WasmEmvProcessor("156", "CNY");
 
-            console.log(`[KernelLoader] ✅ Kernel ${latestKernel.version} loaded successfully`);
+            logger.debug('KernelLoader', `✅ Kernel ${latestKernel.version} loaded successfully`);
             return latestKernel.version;
         } catch (error) {
-            console.error('[KernelLoader] ❌ Kernel load failed:', error);
-
-            // Fallback to mock kernel on error
-            console.warn('[KernelLoader] ⚠️  Falling back to mock kernel');
-            return this.loadMockKernel();
+            logger.error('[KernelLoader] ❌ Kernel load failed:', error);
+            throw error;
         }
     }
 
@@ -57,47 +55,22 @@ export class KernelLoader {
      */
     async loadKernelVersion(version: string): Promise<string> {
         try {
-            console.log(`Downloading kernel ${version}...`);
+            logger.debug('KernelLoader', `Downloading kernel ${version}...`);
             const wasmBytes = await backendApi.downloadKernel(version);
 
-            console.log('Initializing WASM module...');
+            logger.debug('KernelLoader', 'Initializing WASM module...');
             await init(wasmBytes);
 
             this.kernelInstance = new WasmEmvProcessor("156", "CNY");
 
             this.currentVersion = version;
-            console.log(`✅ Kernel ${version} loaded successfully`);
+            logger.debug('KernelLoader', `✅ Kernel ${version} loaded successfully`);
             return version;
         } catch (error) {
-            console.error(`Failed to load kernel ${version}:`, error);
+            logger.error(`Failed to load kernel ${version}:`, error);
             throw error;
         }
     }
-
-    /**
-     * Fallback to mock kernel (local file)
-     */
-    private async loadMockKernel(): Promise<string> {
-        const downloadUrl = '/mock_kernel.wasm';
-        const version = 'v0.0.0-mock';
-
-        try {
-            const response = await fetch(downloadUrl);
-            if (!response.ok) throw new Error('Failed to download mock kernel');
-
-            const wasmBytes = await response.arrayBuffer();
-
-            await init({ module_or_path: wasmBytes });
-            this.kernelInstance = new WasmEmvProcessor("156", "CNY");
-
-            this.currentVersion = version;
-            return version;
-        } catch (error) {
-            console.error('Failed to load mock kernel:', error);
-            throw error;
-        }
-    }
-
 
 
     /**
@@ -108,7 +81,7 @@ export class KernelLoader {
             throw new Error('Kernel not loaded');
         }
 
-        console.log(`[KernelLoader] 💳 Processing transaction: $${amount}`);
+        logger.debug('KernelLoader', `💳 Processing transaction: $${amount}`);
 
         // Simulate processing time
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -116,21 +89,21 @@ export class KernelLoader {
         try {
             // Use the WASM processor to select PPSE as a test
             // In a real flow, this would be a sequence of APDU commands
-            console.log('[KernelLoader] Calling WASM kernel selectPpse()...');
+            logger.debug('KernelLoader', 'Calling WASM kernel selectPpse()...');
             const ppseResult = this.kernelInstance.selectPpse();
-            console.log('[KernelLoader] PPSE Selection Result:', ppseResult);
+            logger.debug('KernelLoader', 'PPSE Selection Result:', ppseResult);
 
             // For demo, we just return a success result
             const cryptogram = `TC_${Date.now()}_${amount}_${Math.random().toString(36).substring(7).toUpperCase()}`;
-            console.log(`[KernelLoader] ✅ Transaction processed successfully`);
-            console.log(`[KernelLoader] Generated cryptogram: ${cryptogram}`);
+            logger.debug('KernelLoader', `✅ Transaction processed successfully`);
+            logger.debug('KernelLoader', `Generated cryptogram: ${cryptogram}`);
 
             return {
                 success: true,
                 cryptogram
             };
         } catch (e) {
-            console.error('[KernelLoader] ❌ WASM processing error:', e);
+            logger.error('[KernelLoader] ❌ WASM processing error:', e);
             throw e;
         }
     }
@@ -146,7 +119,7 @@ export class KernelLoader {
             // This simulates a real device with a fixed hardware identifier
             const imei = getConfig().defaultImei;
 
-            console.log(`📱 Registering device with IMEI ${imei}...`);
+            logger.debug('KernelLoader', `📱 Registering device with IMEI ${imei}...`);
 
             // Generate a mock public key
             const mockPublicKey = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...\n-----END PUBLIC KEY-----";
@@ -170,14 +143,14 @@ export class KernelLoader {
 
             // Check if this is an existing device or newly registered
             if (response.message && response.message.includes('already registered')) {
-                console.log(`✅ Using existing device with ID: ${deviceId}`);
+                logger.debug('KernelLoader', `✅ Using existing device with ID: ${deviceId}`);
             } else {
-                console.log(`✅ New device registered successfully with ID: ${deviceId}`);
+                logger.debug('KernelLoader', `✅ New device registered successfully with ID: ${deviceId}`);
             }
 
             return deviceId;
         } catch (error) {
-            console.error('❌ Device registration failed:', error);
+            logger.error('❌ Device registration failed:', error);
             throw error;
         }
     }
@@ -187,19 +160,19 @@ export class KernelLoader {
      */
     async injectKeys(deviceId: string): Promise<boolean> {
         try {
-            console.log(`Injecting keys for device ${deviceId}...`);
+            logger.debug('KernelLoader', `Injecting keys for device ${deviceId}...`);
             await backendApi.injectKey(deviceId);
-            console.log('✅ Keys injected successfully');
+            logger.debug('KernelLoader', '✅ Keys injected successfully');
             return true;
         } catch (error) {
             // Handle key already injected error - this is not a fatal error
             if (error instanceof Error &&
                 error.message.includes('already been injected')) {
-                console.log('ℹ️ Keys already injected for this device, skipping...');
+                logger.debug('KernelLoader', 'ℹ️ Keys already injected for this device, skipping...');
                 return true; // Return success since keys are already there
             }
 
-            console.error('❌ Key injection failed:', error);
+            logger.error('❌ Key injection failed:', error);
             throw error;
         }
     }
@@ -208,7 +181,7 @@ export class KernelLoader {
      * Attest a transaction (simulate backend call)
      */
     async attestTransaction(cryptogram: string): Promise<boolean> {
-        console.log('Attesting cryptogram:', cryptogram);
+        logger.debug('KernelLoader', 'Attesting cryptogram:', cryptogram);
         // Simulate attestation with backend
         await new Promise(resolve => setTimeout(resolve, 800));
         return true;
@@ -225,7 +198,7 @@ export class KernelLoader {
                 return data.ip;
             }
         } catch (e) {
-            console.warn('Failed to fetch public IP, using fallback');
+            logger.warn('Failed to fetch public IP, using fallback');
         }
         return '127.0.0.1';
     }
@@ -241,7 +214,7 @@ export class KernelLoader {
     }): Promise<any> {
         const BACKEND_URL = getConfig().backendUrl;
 
-        console.log('💳 Processing transaction with backend...');
+        logger.debug('KernelLoader', '💳 Processing transaction with backend...');
 
         // Use the public attest endpoint (no authentication required)
         const response = await fetch(`${BACKEND_URL}/api/v1/transactions/attest`, {
@@ -278,7 +251,7 @@ export class KernelLoader {
         }
 
         const attestResult = await response.json();
-        console.log('✅ Transaction attested successfully:', attestResult);
+        logger.debug('KernelLoader', '✅ Transaction attested successfully:', attestResult);
 
         // 2. Process transaction with the token
         const transactionToken = attestResult.transaction_token;
@@ -286,7 +259,7 @@ export class KernelLoader {
             throw new Error('No transaction token returned from attestation');
         }
 
-        console.log('💳 Completing transaction with token...');
+        logger.debug('KernelLoader', '💳 Completing transaction with token...');
 
         const processResponse = await fetch(`${BACKEND_URL}/api/v1/transactions/process`, {
             method: 'POST',
@@ -317,7 +290,7 @@ export class KernelLoader {
         }
 
         const result = await processResponse.json();
-        console.log('✅ Transaction processed successfully:', result);
+        logger.debug('KernelLoader', '✅ Transaction processed successfully:', result);
 
         return result;
     }

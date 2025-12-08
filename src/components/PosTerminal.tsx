@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { KernelLoader } from '../services/KernelLoader';
 import './PosTerminal.css';
+import { logger } from '../utils/logger';
 
 type TerminalState = 'BOOTING' | 'REGISTERING' | 'INJECTING_KEYS' | 'READY' | 'PROCESSING' | 'SUCCESS' | 'ERROR';
 
@@ -37,7 +38,7 @@ export const PosTerminal: React.FC = () => {
             setState('READY');
             setStatusMessage('Ready for Transaction');
         } catch (e) {
-            console.error('Initialization failed:', e);
+            logger.error('Initialization failed:', e);
             setState('ERROR');
             setStatusMessage('Initialization Failed');
         }
@@ -90,7 +91,7 @@ export const PosTerminal: React.FC = () => {
                         }
                     });
 
-                    console.log('✅ Backend transaction success:', backendResult);
+                    logger.log('✅ Backend transaction success:', backendResult);
 
                     // Use the cryptogram from backend response or local kernel
                     const finalCryptogram = backendResult.cryptogram || result.cryptogram;
@@ -98,7 +99,7 @@ export const PosTerminal: React.FC = () => {
                     setState('SUCCESS');
                     setStatusMessage('Transaction Approved');
                 } catch (backendError) {
-                    console.error('❌ Backend transaction failed:', backendError);
+                    logger.error('❌ Backend transaction failed:', backendError);
                     // Fallback to local attestation
                     const attested = await loader.attestTransaction(result.cryptogram);
                     if (attested) {
@@ -111,7 +112,7 @@ export const PosTerminal: React.FC = () => {
                 }
             }
         } catch (e) {
-            console.error('Transaction error:', e);
+            logger.error('Transaction error:', e);
             setState('ERROR');
             setStatusMessage('Transaction Failed');
         }

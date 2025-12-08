@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { PosTerminal } from './components/PosTerminal';
 import { loadConfig, getConfig } from './config';
+import { logger } from './utils/logger';
 
 function App() {
   const [configLoaded, setConfigLoaded] = useState(false);
@@ -12,11 +13,11 @@ function App() {
     loadConfig()
       .then(() => {
         const config = getConfig();
-        console.log('📋 App Configuration:', config);
+        logger.log('📋 App Configuration:', config);
         setConfigLoaded(true);
       })
       .catch((err) => {
-        console.error('❌ Failed to load configuration:', err);
+        logger.error('❌ Failed to load configuration:', err);
         setError('Failed to load configuration');
         setConfigLoaded(true); // Continue with default config
       });

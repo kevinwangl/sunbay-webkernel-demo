@@ -12,28 +12,30 @@
  * - The app will automatically load from config.json if it exists
  */
 
+import { logger } from './utils/logger';
+
 export interface AppConfiguration {
     // The URL of the Sunbay SoftPOS Backend
     backendUrl: string;
-    
+
     // The Fixed IMEI to use for this device
     defaultImei: string;
-    
+
     // Device Model Name
     deviceModel: string;
-    
+
     // TEE Type (Must be 'QTEE' or 'TRUST_ZONE')
     teeType: 'QTEE' | 'TRUST_ZONE';
-    
+
     // Device Mode (Must be 'FULL_POS' or 'PIN_PAD')
     deviceMode: 'FULL_POS' | 'PIN_PAD';
-    
+
     // Enable debug mode
     debug?: boolean;
-    
+
     // Auto register device on startup
     autoRegister?: boolean;
-    
+
     // Preferred kernel version
     kernelVersion?: string;
 }
@@ -62,12 +64,12 @@ export async function loadConfig(): Promise<AppConfiguration> {
         if (response.ok) {
             const externalConfig = await response.json();
             runtimeConfig = { ...defaultConfig, ...externalConfig };
-            console.log('✅ Configuration loaded from config.json:', runtimeConfig);
+            logger.log('✅ Configuration loaded from config.json:', runtimeConfig);
         } else {
-            console.warn('⚠️  config.json not found, using default configuration');
+            logger.warn('⚠️  config.json not found, using default configuration');
         }
     } catch (error) {
-        console.warn('⚠️  Failed to load config.json, using default configuration:', error);
+        logger.warn('⚠️  Failed to load config.json, using default configuration:', error);
     }
     return runtimeConfig;
 }
@@ -84,8 +86,5 @@ export function getConfig(): AppConfiguration {
  */
 export function updateConfig(updates: Partial<AppConfiguration>): void {
     runtimeConfig = { ...runtimeConfig, ...updates };
-    console.log('🔄 Configuration updated:', runtimeConfig);
+    logger.log('🔄 Configuration updated:', runtimeConfig);
 }
-
-// Export default config for backward compatibility
-export const AppConfig = defaultConfig;
