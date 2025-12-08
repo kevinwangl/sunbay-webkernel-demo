@@ -9,16 +9,13 @@ export interface KernelVersion {
     updated_at: string;
 }
 
-import { AppConfig } from '../config';
-
-// Configuration
-const BACKEND_URL = AppConfig.backendUrl;
+import { getConfig } from '../config';
 
 // Backend Public API (no authentication required)
 // Note: Backend uses camelCase for field names (via #[serde(rename_all = "camelCase")])
 export const backendApi = {
     async getStableKernels(): Promise<KernelVersion[]> {
-        const res = await fetch(`${BACKEND_URL}/api/v1/public/kernels`);
+        const res = await fetch(`${getConfig().backendUrl}/api/v1/public/kernels`);
         if (!res.ok) {
             throw new Error('Failed to fetch kernels');
         }
@@ -28,7 +25,7 @@ export const backendApi = {
     },
 
     async getLatestKernel(): Promise<KernelVersion> {
-        const res = await fetch(`${BACKEND_URL}/api/v1/public/kernels/latest`);
+        const res = await fetch(`${getConfig().backendUrl}/api/v1/public/kernels/latest`);
         if (!res.ok) {
             throw new Error('Failed to fetch latest kernel');
         }
@@ -38,7 +35,7 @@ export const backendApi = {
     },
 
     async downloadKernel(version: string): Promise<ArrayBuffer> {
-        const res = await fetch(`${BACKEND_URL}/api/v1/public/kernels/${version}/download`);
+        const res = await fetch(`${getConfig().backendUrl}/api/v1/public/kernels/${version}/download`);
         if (!res.ok) {
             throw new Error('Download failed');
         }
@@ -46,11 +43,11 @@ export const backendApi = {
     },
 
     getDownloadUrl(version: string) {
-        return `${BACKEND_URL}/api/v1/public/kernels/${version}/download`;
+        return `${getConfig().backendUrl}/api/v1/public/kernels/${version}/download`;
     },
 
     async registerDevice(data: any): Promise<any> {
-        const res = await fetch(`${BACKEND_URL}/api/v1/devices/register`, {
+        const res = await fetch(`${getConfig().backendUrl}/api/v1/devices/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -69,7 +66,7 @@ export const backendApi = {
     },
 
     async injectKey(deviceId: string): Promise<any> {
-        const res = await fetch(`${BACKEND_URL}/api/v1/public/keys/inject`, {
+        const res = await fetch(`${getConfig().backendUrl}/api/v1/public/keys/inject`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

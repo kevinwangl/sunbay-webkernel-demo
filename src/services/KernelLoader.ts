@@ -1,5 +1,5 @@
 import { backendApi } from '../api/client';
-import { AppConfig } from '../config';
+import { getConfig } from '../config';
 import init, { WasmEmvProcessor } from '../wasm/sunbay_kernel_service';
 
 export class KernelLoader {
@@ -144,7 +144,7 @@ export class KernelLoader {
         try {
             // Use fixed IMEI from configuration
             // This simulates a real device with a fixed hardware identifier
-            const imei = AppConfig.defaultImei;
+            const imei = getConfig().defaultImei;
 
             console.log(`📱 Registering device with IMEI ${imei}...`);
 
@@ -153,11 +153,11 @@ export class KernelLoader {
 
             const response = await backendApi.registerDevice({
                 imei: imei,
-                model: AppConfig.deviceModel,
+                model: getConfig().deviceModel,
                 os_version: '1.0.0',  // snake_case for RegisterDeviceRequest
-                tee_type: AppConfig.teeType,  // snake_case
+                tee_type: getConfig().teeType,  // snake_case
                 public_key: mockPublicKey,  // snake_case
-                device_mode: AppConfig.deviceMode,  // snake_case
+                device_mode: getConfig().deviceMode,  // snake_case
                 nfc_present: true  // snake_case
             });
 
@@ -239,7 +239,7 @@ export class KernelLoader {
         currency: string;
         healthCheck?: any;
     }): Promise<any> {
-        const BACKEND_URL = 'http://localhost:8080';
+        const BACKEND_URL = getConfig().backendUrl;
 
         console.log('💳 Processing transaction with backend...');
 
