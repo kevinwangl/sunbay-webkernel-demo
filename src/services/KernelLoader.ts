@@ -188,19 +188,75 @@ export class KernelLoader {
     }
 
     /**
-     * Get client IP address
+     * Get client IP address using multiple IP detection services
+     * Tries multiple services with timeout for reliability
      */
     private async getClientIp(): Promise<string> {
-        try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            if (response.ok) {
-                const data = await response.json();
-                return data.ip;
+        // List of IP detection services (in order of preference)
+        const ipServices = [
+            { url: 'https://api.ipify.org', field: null },
+            { url: 'https://api64.ipify.org', field: null },
+            { url: 'https://ipapi.co/json/', field: 'ip' },
+            { url: 'https://ifconfig.me/ip', field: null }, // Returns plain text
+        ];
+
+        // Try each service with timeout
+        for (const service of ipServices) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
+                const response = await fetch(service.url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json, text/plain'
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    let ip: string;
+                    
+                    if (service.field) {
+                        // JSON response
+                        const data = await response.json();
+                        ip = data[service.field];
+                    } else {
+                        // Plain text response
+                        ip = (await response.text()).trim();
+                    }
+
+                    if (ip && this.isValidIp(ip)) {
+                        logger.debug('KernelLoader', `📍 Detected public IP: ${ip} (from ${service.url})`);
+                        return ip;
+                    }
+                }
+            } catch (error) {
+                // Try next service
+                logger.debug('KernelLoader', `Failed to get IP from ${service.url}, trying next...`);
+                continue;
             }
-        } catch (e) {
-            logger.warn('Failed to fetch public IP, using fallback');
         }
-        return '127.0.0.1';
+
+        // All services failed, return fallback
+        logger.warn('KernelLoader', 'All IP detection services failed, using fallback');
+        return '0.0.0.0';
+    }
+
+    /**
+     * Validate IP address format
+     */
+    private isValidIp(ip: string): boolean {
+        const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+        if (!ipRegex.test(ip)) return false;
+
+        const parts = ip.split('.');
+        return parts.every(part => {
+            const num = parseInt(part, 10);
+            return num >= 0 && num <= 255;
+        });
     }
 
     /**

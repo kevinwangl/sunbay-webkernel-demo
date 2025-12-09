@@ -162,7 +162,6 @@ export const PosTerminal: React.FC = () => {
                         <h3>APPROVED</h3>
                         <p className="amount" style={{ fontSize: '24px', margin: '10px 0' }}>${amount}</p>
                         <p className="cryptogram">TC: {cryptogram.substring(0, 16)}...</p>
-                        <button className="receipt-btn" onClick={reset}>New Transaction</button>
                     </div>
                 )}
 
@@ -171,7 +170,6 @@ export const PosTerminal: React.FC = () => {
                         <div className="cross">✕</div>
                         <h3>DECLINED</h3>
                         <p style={{ fontSize: '12px', marginTop: '5px' }}>{statusMessage}</p>
-                        <button className="receipt-btn" onClick={reset}>Try Again</button>
                     </div>
                 )}
             </div>
@@ -185,8 +183,12 @@ export const PosTerminal: React.FC = () => {
                 <button className="clear-btn" onClick={handleClear} disabled={state !== 'READY'}>C</button>
             </div>
 
-            <button className="pay-btn" onClick={handlePay} disabled={state !== 'READY' || !amount}>
-                PAY
+            <button 
+                className="pay-btn" 
+                onClick={state === 'SUCCESS' || state === 'ERROR' ? reset : handlePay} 
+                disabled={state !== 'READY' && state !== 'SUCCESS' && state !== 'ERROR' || (state === 'READY' && !amount)}
+            >
+                {state === 'SUCCESS' || state === 'ERROR' ? 'NEW TRANSACTION' : 'PAY'}
             </button>
 
             <div className="terminal-footer">

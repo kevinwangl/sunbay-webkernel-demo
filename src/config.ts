@@ -3,10 +3,16 @@
  * 
  * This file contains the configuration for the Sunbay WebKernel Demo.
  * Configuration can be loaded from:
- * 1. External config.json file (recommended for production)
- * 2. Default values defined here (fallback)
+ * 1. Environment variables (VITE_BACKEND_URL) - recommended
+ * 2. External config.json file (runtime override)
+ * 3. Default values defined here (fallback)
  * 
- * To customize configuration:
+ * Environment Configuration:
+ * - Development: Uses .env.development (http://localhost:8080)
+ * - Production: Uses .env.production (https://softpay.sunbay.dev)
+ * - Custom: Create .env.local to override
+ * 
+ * Runtime Configuration (optional):
  * - Copy config.example.json to config.json
  * - Modify config.json with your settings
  * - The app will automatically load from config.json if it exists
@@ -41,13 +47,14 @@ export interface AppConfiguration {
 }
 
 // Default configuration (fallback)
+// Use environment variable for backend URL, with fallback to localhost
 const defaultConfig: AppConfiguration = {
-    backendUrl: 'http://localhost:8080',
+    backendUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080',
     defaultImei: '863592048725123',
     deviceModel: 'Sunbay-Web-Demo',
     teeType: 'QTEE',
     deviceMode: 'FULL_POS',
-    debug: true,
+    debug: import.meta.env.DEV, // true in development, false in production
     autoRegister: true,
     kernelVersion: 'v1.0.0'
 };

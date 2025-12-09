@@ -27,3 +27,7 @@ dist-ssr
 config.json
 config.*.json
 !config.example.json
+
+# Environment variables (keep .env.example, ignore others)
+.env.local
+.env.*.local
